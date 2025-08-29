@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tweet {
+  id        String   @id @default(cuid())
+  tweetUrl  String   @unique
+  tweetText String   @db.Text
+  tweetId   String   @unique
+  author    String
+  source    Source
+  status    Status   @default(NEW)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  replies   Reply[]
+
+  @@map("tweets")
+}
+
+model BaseImage {
+  id          String   @id @default(cuid())
+  filename    String
+  path        String
+  description String?
+  uploadedAt  DateTime @default(now())
+  replies     Reply[]
+
+  @@map("base_images")
+}
+
+model Reply {
+  id           String     @id @default(cuid())
+  tweetId      String
+  tweet        Tweet      @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  replyText    String     @db.Text
+  imageId      String?
+  baseImage    BaseImage? @relation(fields: [imageId], references: [id])
+  imagePath    String?
+  postedAt     DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@map("replies")
+}
+
+enum Source {
+  DISCORD
+  MANUAL
+  HASHTAG
+}
+
+enum Status {
+  NEW
+  REPLIED
+  SKIPPED
+}

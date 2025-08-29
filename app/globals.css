@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gugo-brown: #8B4513;
+  --gugo-gold: #DAA520;
+  --gugo-cream: #F5E6D3;
+  --gugo-orange: #FF8C42;
+  --gugo-sage: #87A96B;
+  --gugo-tan: #D2B48C;
+  --gugo-dark: #2F1B14;
+  --gugo-white: #FEFEFE;
+  --gugo-blue: #87CEEB;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 600;
+  background: linear-gradient(135deg, #F5E6D3 0%, #D2B48C 50%, #DAA520 100%);
+  color: var(--gugo-dark);
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer components {
+  .gugo-container {
+    @apply min-h-screen bg-desert-gradient text-gugo-dark;
+  }
+
+  .gugo-header {
+    @apply bg-gugo-brown text-gugo-cream p-6 shadow-adventure;
+  }
+
+  .gugo-logo {
+    @apply font-gugo-header text-4xl font-bold text-gugo-gold;
+  }
+
+  .gugo-button {
+    @apply bg-gugo-blue text-gugo-dark border-2 border-gugo-brown 
+           font-black text-sm px-6 py-3 rounded-full
+           hover:bg-gugo-gold hover:text-gugo-white 
+           transition-all duration-300 cursor-pointer shadow-adventure
+           focus:outline-none focus:ring-4 focus:ring-gugo-gold focus:ring-opacity-50;
+  }
+
+  .gugo-button-secondary {
+    @apply bg-gugo-cream text-gugo-dark border-2 border-gugo-brown 
+           font-black text-sm px-6 py-3 rounded-full
+           hover:bg-gugo-orange hover:text-gugo-white 
+           transition-all duration-300 cursor-pointer shadow-adventure
+           focus:outline-none focus:ring-4 focus:ring-gugo-orange focus:ring-opacity-50;
+  }
+
+  .gugo-card {
+    @apply bg-adventure-card border-2 border-gugo-brown p-6 rounded-gugo
+           hover:transform hover:-translate-y-2 hover:shadow-golden
+           transition-all duration-300;
+  }
+
+  .gugo-input {
+    @apply bg-gugo-white border-2 border-gugo-brown p-4 rounded-gugo
+           focus:outline-none focus:border-gugo-gold focus:ring-4 
+           focus:ring-gugo-gold focus:ring-opacity-25
+           transition-all duration-300;
+  }
+
+  .gugo-textarea {
+    @apply bg-gugo-white border-2 border-gugo-brown p-4 rounded-gugo resize-none
+           focus:outline-none focus:border-gugo-gold focus:ring-4 
+           focus:ring-gugo-gold focus:ring-opacity-25
+           transition-all duration-300 min-h-32;
+  }
+
+  .gugo-modal-overlay {
+    @apply fixed inset-0 bg-gugo-dark bg-opacity-75 flex items-center justify-center p-4 z-50;
+  }
+
+  .gugo-modal {
+    @apply bg-gugo-cream border-4 border-gugo-brown rounded-gugo max-w-4xl w-full max-h-[90vh] overflow-auto shadow-golden;
+  }
+
+  .gugo-modal-header {
+    @apply bg-gugo-gold text-gugo-dark p-4 rounded-t-gugo;
+  }
+
+  .gugo-modal-title {
+    @apply font-gugo-header text-2xl font-bold;
+  }
+
+  .gugo-status-new {
+    @apply bg-gugo-sage text-gugo-white border-2 border-gugo-brown px-3 py-1 text-xs font-bold rounded-gugo;
+  }
+
+  .gugo-status-replied {
+    @apply bg-gugo-gold text-gugo-dark border-2 border-gugo-brown px-3 py-1 text-xs font-bold rounded-gugo;
+  }
+
+  .gugo-status-skipped {
+    @apply bg-gugo-orange text-gugo-white border-2 border-gugo-brown px-3 py-1 text-xs font-bold rounded-gugo;
+  }
+
+  .gugo-grid {
+    @apply grid gap-6;
+  }
+
+  .gugo-grid-2 {
+    @apply grid-cols-1 md:grid-cols-2;
+  }
+
+  .gugo-grid-3 {
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .gugo-grid-4 {
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .gugo-image-frame {
+    @apply border-2 border-gugo-brown rounded-gugo overflow-hidden;
+  }
+
+  .gugo-image-selected {
+    @apply border-4 border-gugo-gold shadow-golden;
+  }
+
+  .gugo-fab {
+    @apply fixed bottom-8 right-8 w-16 h-16 bg-gugo-gold text-gugo-dark
+           border-2 border-gugo-brown rounded-full
+           flex items-center justify-center text-2xl font-bold
+           hover:bg-gugo-orange hover:text-gugo-white
+           transition-all duration-300 shadow-golden
+           focus:outline-none focus:ring-4 focus:ring-gugo-gold focus:ring-opacity-50;
+  }
+
+  .gugo-loading {
+    @apply animate-pulse bg-gugo-tan text-gugo-dark;
+  }
+}
+
+@layer utilities {
+  .text-shadow-gold {
+    text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.3);
+  }
+
+  .adventure-border {
+    border: 2px solid var(--gugo-brown);
+  }
+
+  .golden-glow {
+    box-shadow: 0 0 8px rgba(218, 165, 32, 0.2);
+  }
+}
+
+@keyframes subtle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}

@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gugo-postgres
+    environment:
+      POSTGRES_USER: gugo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gugo_password_2024}
+      POSTGRES_DB: gugo_reply_hub
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gugo -d gugo_reply_hub"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build: .
+    container_name: gugo-reply-hub
+    environment:
+      DATABASE_URL: postgresql://gugo:${DB_PASSWORD:-gugo_password_2024}@postgres:5432/gugo_reply_hub
+      NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-default_secret_change_in_production}
+      NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
+      
+      # AI Providers
+      TEXT_PROVIDER: ${TEXT_PROVIDER:-deepseek}
+      IMAGE_PROVIDER: ${IMAGE_PROVIDER:-together}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      TOGETHER_API_KEY: ${TOGETHER_API_KEY}
+      REPLICATE_API_KEY: ${REPLICATE_API_KEY}
+      COMFYUI_ENDPOINT: ${COMFYUI_ENDPOINT:-http://localhost:8188}
+      
+      # Twitter/X OAuth
+      TWITTER_CLIENT_ID: ${TWITTER_CLIENT_ID}
+      TWITTER_CLIENT_SECRET: ${TWITTER_CLIENT_SECRET}
+      
+      # Discord Bot
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_CHANNEL_IDS: ${DISCORD_CHANNEL_IDS}
+      CHECK_INTERVAL_MINUTES: ${CHECK_INTERVAL_MINUTES:-5}
+      
+      # Storage
+      UPLOAD_DIR: /app/storage
+    volumes:
+      - ./storage:/app/storage
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:

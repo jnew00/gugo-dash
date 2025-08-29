@@ -1,0 +1,50 @@
+{
+  "name": "gugo-dash",
+  "version": "1.0.0",
+  "description": "GUGO Dash - Personal productivity tool for managing Twitter/X engagement with AI assistance - We Just Run",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "discord:bot": "node lib/discord-bot.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "@types/multer": "^1.4.12",
+    "discord.js": "^14.16.3",
+    "framer-motion": "^11.11.1",
+    "lucide-react": "^0.542.0",
+    "multer": "^1.4.5-lts.1",
+    "next": "^14.2.13",
+    "next-auth": "^4.24.8",
+    "node-cron": "^3.0.3",
+    "openai": "^4.67.1",
+    "prisma": "^5.20.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "replicate": "^0.34.1",
+    "sharp": "^0.33.5",
+    "tailwindcss": "^3.4.13",
+    "twitter-api-v2": "^1.17.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.13",
+    "postcss": "^8.4.47",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
