@@ -1,0 +1,20 @@
+{
+  "note": "This file contains sample image URLs for testing. Real images should be uploaded through the UI.",
+  "samples": [
+    {
+      "filename": "sample_gugo_1.jpg",
+      "url": "https://wxnjauindygyohnemrjg.supabase.co/storage/v1/object/public/memes/uploads/1752002060073-ir265om89c.jpeg",
+      "description": "GUGO We Just Run"
+    },
+    {
+      "filename": "sample_energy_1.jpg",
+      "url": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800",
+      "description": "Athletic Energy"
+    },
+    {
+      "filename": "sample_runner_1.jpg",
+      "url": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
+      "description": "Runner in Action"
+    }
+  ]
+}

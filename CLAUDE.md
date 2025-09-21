@@ -216,3 +216,27 @@ Every decision should ask:
 4. Does it help the user GO?
 
 Remember: GUGO Reply Hub isn't just a tool - it's a statement. Make it powerful, make it fast, make it GUGO.
+
+## Git Management & Code Preservation
+**CRITICAL**: Always commit your changes when you complete work on a feature or fix a significant issue. This ensures work is saved and provides a clear history of progress.
+
+### When to Commit:
+- After implementing a complete feature
+- After fixing a bug or issue
+- After making significant improvements
+- When work is tested and functional
+- Before making major architectural changes
+
+### Commit Message Format:
+Use clear, descriptive messages that explain what was implemented:
+- "Add Twitter authentication with error handling"
+- "Fix reply posting API integration"
+- "Implement meme analysis system with AI provider selection"
+- "Update authentication error messages and reconnection flow"
+
+### What NOT to commit:
+- Work-in-progress or broken code
+- Temporary debugging files
+- Environment secrets (already in .gitignore)
+
+**Remember**: Git commits preserve your work. Don't lose hours of development because you forgot to commit!

@@ -18,6 +18,7 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
   const [isPosting, setIsPosting] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showImageGallery, setShowImageGallery] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   const generateSuggestions = async () => {
     setIsGenerating(true)
@@ -39,24 +40,31 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
 
   const postReply = async () => {
     if (!replyText.trim()) return
-    
+
     setIsPosting(true)
+    setErrorMessage('')
+
     try {
       const response = await fetch('/api/replies/post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           tweetId: tweet.tweetId,
           replyText,
-          imageId: selectedImage 
+          imageId: selectedImage
         })
       })
-      
+
       if (response.ok) {
         onReplySent()
+      } else {
+        // Handle error response
+        const errorData = await response.json()
+        setErrorMessage(errorData.error || 'Failed to post reply')
       }
     } catch (error) {
       console.error('Failed to post reply:', error)
+      setErrorMessage('Network error - please check your connection')
     } finally {
       setIsPosting(false)
     }
@@ -136,10 +144,34 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
           </div>
 
           {showImageGallery && (
-            <ImageGallery 
+            <ImageGallery
               selectedImage={selectedImage}
               onImageSelect={setSelectedImage}
             />
+          )}
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="bg-red-100 border-2 border-red-500 rounded p-3 mb-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-red-500 font-black text-sm">❌ ERROR:</span>
+                <span className="text-red-700 text-sm">{errorMessage}</span>
+              </div>
+              {(errorMessage.includes('authentication') || errorMessage.includes('login')) && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => {
+                      import('next-auth/react').then(({ signIn }) => {
+                        signIn('twitter')
+                      })
+                    }}
+                    className="text-xs bg-red-500 text-white px-3 py-1 rounded font-bold hover:bg-red-600 transition-colors"
+                  >
+                    RECONNECT TWITTER
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex items-center justify-between pt-4 border-t-2 border-gugo-black">
