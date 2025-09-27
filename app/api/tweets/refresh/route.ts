@@ -32,17 +32,16 @@ export async function POST(request: NextRequest) {
         let newText = ''
         let newAuthor = tweet.author
 
-        // Try the main API method first (with Bearer token)
-        const tweetData = await twitterApi.getTweetById(tweet.tweetId)
-        if (tweetData) {
-          newText = tweetData.text
-          newAuthor = tweetData.author
+        // Prefer guest endpoints to avoid burning authenticated rate limits
+        const guestData = await twitterApi.getTweetByIdGuest(tweet.tweetId)
+        if (guestData) {
+          newText = guestData.text
+          newAuthor = guestData.author
         } else {
-          // Try the guest method as fallback
-          const guestData = await twitterApi.getTweetByIdGuest(tweet.tweetId)
-          if (guestData) {
-            newText = guestData.text
-            newAuthor = guestData.author
+          const tweetData = await twitterApi.getTweetById(tweet.tweetId)
+          if (tweetData) {
+            newText = tweetData.text
+            newAuthor = tweetData.author
           }
         }
 

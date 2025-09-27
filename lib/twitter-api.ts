@@ -25,15 +25,36 @@ interface TwitterApiResponse {
 }
 
 export class TwitterApi {
+  private static normalizeBearerToken(rawToken: string | undefined | null): string {
+    if (!rawToken) return ''
+
+    try {
+      const decoded = decodeURIComponent(rawToken)
+      const unquoted = decoded.replace(/^"|"$/g, '')
+      return unquoted.trim()
+    } catch (error) {
+      console.error('Failed to decode Twitter bearer token. Using raw value.', error)
+      return rawToken.trim()
+    }
+  }
+
   private bearerToken: string
+  private inMemoryCache = new Map<string, { text: string; author: string }>()
 
   constructor() {
     // Handle URL-encoded tokens
-    const token = process.env.TWITTER_BEARER_TOKEN || ''
-    this.bearerToken = decodeURIComponent(token).trim()
+    this.bearerToken = TwitterApi.normalizeBearerToken(process.env.TWITTER_BEARER_TOKEN)
+  }
+
+  hasBearerToken(): boolean {
+    return Boolean(this.bearerToken)
   }
 
   async getTweetById(tweetId: string): Promise<{ text: string; author: string } | null> {
+    if (this.inMemoryCache.has(tweetId)) {
+      return this.inMemoryCache.get(tweetId) ?? null
+    }
+
     if (!this.bearerToken) {
       console.warn('Twitter Bearer Token not configured')
       return null
@@ -51,7 +72,22 @@ export class TwitterApi {
       )
 
       if (!response.ok) {
-        console.error('Twitter API error:', response.status, response.statusText)
+        const status = response.status
+        const statusText = response.statusText
+        console.error('Twitter API error:', status, statusText)
+
+        if (status === 401) {
+          console.error('Twitter API authentication failed (401). Verify TWITTER_BEARER_TOKEN permissions and freshness.')
+        }
+
+        if (status === 429) {
+          console.error('Twitter API rate limit exceeded while fetching tweet', {
+            tweetId,
+            remaining: response.headers.get('x-rate-limit-remaining'),
+            reset: response.headers.get('x-rate-limit-reset')
+          })
+        }
+
         return null
       }
 
@@ -73,10 +109,12 @@ export class TwitterApi {
         author = data.includes.users[0].username
       }
 
-      return {
+      const result = {
         text: data.data.text,
         author: author
       }
+      this.inMemoryCache.set(tweetId, result)
+      return result
     } catch (error) {
       console.error('Failed to fetch tweet:', error)
       return null
@@ -85,6 +123,10 @@ export class TwitterApi {
 
   // Alternative method using oEmbed API (no auth required, more reliable)
   async getTweetByIdGuest(tweetId: string): Promise<{ text: string; author: string } | null> {
+    if (this.inMemoryCache.has(tweetId)) {
+      return this.inMemoryCache.get(tweetId) ?? null
+    }
+
     try {
       // Try oEmbed API first - most reliable without auth
       const oembedUrl = `https://publish.twitter.com/oembed?url=https://twitter.com/i/status/${tweetId}&omit_script=true`
@@ -113,8 +155,10 @@ export class TwitterApi {
 
             const author = data.author_name || 'Unknown'
 
+            const result = { text, author }
+            this.inMemoryCache.set(tweetId, result)
             console.log(`Successfully extracted tweet via oEmbed: "${text}" by @${author}`)
-            return { text, author }
+            return result
           }
         }
       }
@@ -129,10 +173,12 @@ export class TwitterApi {
       const syndicationData = await syndicationResponse.json()
 
       if (syndicationData && syndicationData.text) {
-        return {
+        const result = {
           text: syndicationData.text,
           author: syndicationData.user?.screen_name || syndicationData.user?.name || 'Unknown'
         }
+        this.inMemoryCache.set(tweetId, result)
+        return result
       }
 
       return null
@@ -140,5 +186,9 @@ export class TwitterApi {
       console.error('Failed to fetch tweet via guest method:', error)
       return null
     }
+  }
+
+  static getNormalizedBearerToken(): string {
+    return TwitterApi.normalizeBearerToken(process.env.TWITTER_BEARER_TOKEN)
   }
 }

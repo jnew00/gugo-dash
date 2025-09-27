@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import { apiResponse, apiError } from '@/lib/utils'
+import { TwitterApi } from '@/lib/twitter-api'
 
 export async function GET(request: NextRequest) {
   try {
-    const bearerToken = process.env.TWITTER_BEARER_TOKEN
+    const bearerToken = TwitterApi.getNormalizedBearerToken()
 
     if (!bearerToken) {
       return apiError('TWITTER_BEARER_TOKEN not found in environment variables', 400)
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     console.log('Testing Twitter API with Bearer Token...')
     console.log('Token exists:', !!bearerToken)
-    console.log('Token starts with:', bearerToken.substring(0, 20) + '...')
+    console.log('Token preview:', `${bearerToken.substring(0, 6)}…${bearerToken.slice(-4)}`)
 
     const response = await fetch(
       `https://api.twitter.com/2/tweets/${testTweetId}?expansions=author_id&user.fields=username,name`,
@@ -44,12 +45,24 @@ export async function GET(request: NextRequest) {
     }
 
     if (!response.ok) {
+      let message = 'Twitter API returned error'
+      if (response.status === 401) {
+        message = 'Twitter API authentication failed (401). Verify that TWITTER_BEARER_TOKEN is valid and has Read access.'
+      } else if (response.status === 429) {
+        message = 'Twitter API rate limit exceeded. Wait for the reset and retry.'
+      }
+
       return apiResponse({
         status: 'error',
-        message: 'Twitter API returned error',
+        message,
         httpStatus: response.status,
         errors: data.errors || data,
-        detail: data.detail || 'No details provided'
+        detail: data.detail || 'No details provided',
+        rateLimit: {
+          limit: response.headers.get('x-rate-limit-limit'),
+          remaining: response.headers.get('x-rate-limit-remaining'),
+          reset: response.headers.get('x-rate-limit-reset')
+        }
       })
     }
 
