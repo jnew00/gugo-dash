@@ -51,6 +51,17 @@ Every pixel follows the adventure spirit:
 - **OpenAI** (fallback option)
 - **Replicate** (alternative image provider)
 
+#### Meme Matching & Local LLMs
+- The meme picker respects the admin-selected provider (DeepSeek, OpenAI, or Local). When running locally (LM Studio/Ollama), make sure your server exposes `/v1/chat/completions` with a context window large enough to cover the prompt (see log output below).
+- Every meme in the prompt includes its description and, if available, tags. Descriptions come from the vision analysis step (`POST /api/memes/analyze`), so run that endpoint to give the matcher rich context.
+- The prompt builder prioritises the most relevant memes using a keyword/tone scorer. The top *N* (defaults to 80) keep full descriptions; the rest are summarized as `ID + tags` so the model can still see your whole collection without blowing up context.
+- Tune the detailed block size with `MEME_MATCH_FULL_LIMIT` in `.env` (set lower to shrink prompts, higher to include more descriptions).
+- Watch the server logs for:
+  - `Meme match prompt stats` → shows detailed vs summary counts, character length, and an approximate token count (characters ÷ 4) so you can line up your local model’s context length.
+  - `Meme match provider response` → dumps the raw model output for debugging.
+  - `Supplementing meme recommendations…` → indicates we topped up fewer-than-three IDs with keyword-ranked memes to keep UX consistent.
+- The reply generator also honours the admin text provider setting; the local path expects `/v1/chat/completions` first and falls back to `/api/generate` if needed.
+
 ### Infrastructure
 - **Docker** containerization
 - **Unraid** deployment target
@@ -110,6 +121,7 @@ TWITTER_CLIENT_ID="your_twitter_client"
 TWITTER_CLIENT_SECRET="your_twitter_secret"
 DISCORD_BOT_TOKEN="your_discord_token"
 DISCORD_CHANNEL_IDS="123456789,987654321"
+MEME_MATCH_FULL_LIMIT=80        # Number of memes that keep full descriptions in the matching prompt
 ```
 
 See `.env.example` for all options.

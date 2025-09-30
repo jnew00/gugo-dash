@@ -75,7 +75,7 @@ export default function HomePage() {
           
           <div className="mt-16 p-8 bg-gugo-tan border-2 border-gugo-brown rounded-gugo text-center">
             <p className="text-gugo-dark font-bold text-lg">
-              Ready to run with GUGO? Let's engage the adventure.
+              Ready to run with GUGO? Let&apos;s engage the adventure.
             </p>
           </div>
         </div>

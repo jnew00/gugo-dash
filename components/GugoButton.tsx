@@ -4,7 +4,7 @@ interface GugoButtonProps {
   children: React.ReactNode
   onClick?: () => void
   disabled?: boolean
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'danger'
   type?: 'button' | 'submit' | 'reset'
   className?: string
 }
@@ -17,7 +17,12 @@ export default function GugoButton({
   type = 'button',
   className = ''
 }: GugoButtonProps) {
-  const baseClasses = variant === 'primary' ? 'gugo-button' : 'gugo-button-secondary'
+  const getBaseClasses = () => {
+    if (variant === 'primary') return 'gugo-button'
+    if (variant === 'danger') return 'gugo-button-secondary bg-red-500 hover:bg-red-600 text-white border-red-700'
+    return 'gugo-button-secondary'
+  }
+  const baseClasses = getBaseClasses()
   const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : ''
   
   return (

@@ -272,7 +272,7 @@ CHECK_INTERVAL_MINUTES=5
   </main>
   
   <button className="gugo-fab">
-    + ADD TWEET
+    ADD TWEET
   </button>
 </div>
 ```

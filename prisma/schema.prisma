@@ -36,16 +36,62 @@ model BaseImage {
   @@map("base_images")
 }
 
+model Meme {
+  id          String   @id @default(cuid())
+  filename    String
+  path        String
+  tags        String[] @default([])
+  description String?
+  analyzed    Boolean  @default(false)
+  uploadedAt  DateTime @default(now())
+  replies     Reply[]
+
+  @@map("memes")
+}
+
+model AdminSettings {
+  id                String   @id @default("admin")
+  textProvider      String   @default("local")
+  imageProvider     String   @default("together")
+  memeMatchModel    String   @default("local")
+  memeAnalysisModel String   @default("local")
+  updatedAt         DateTime @updatedAt
+
+  @@map("admin_settings")
+}
+
+model Hashtag {
+  id        String   @id @default(cuid())
+  tag       String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("hashtags")
+}
+
+model Mention {
+  id        String   @id @default(cuid())
+  handle    String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("mentions")
+}
+
 model Reply {
-  id           String     @id @default(cuid())
-  tweetId      String
-  tweet        Tweet      @relation(fields: [tweetId], references: [id], onDelete: Cascade)
-  replyText    String     @db.Text
-  imageId      String?
-  baseImage    BaseImage? @relation(fields: [imageId], references: [id])
-  imagePath    String?
-  postedAt     DateTime?
-  createdAt    DateTime   @default(now())
+  id              String     @id @default(cuid())
+  tweetId         String
+  tweet           Tweet      @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  replyText       String     @db.Text
+  imageId         String?
+  baseImage       BaseImage? @relation(fields: [imageId], references: [id])
+  memeId          String?
+  meme            Meme?      @relation(fields: [memeId], references: [id])
+  imagePath       String?
+  imageUrl        String?
+  twitterReplyId  String?    // Twitter reply ID for deletion
+  postedAt        DateTime?
+  createdAt       DateTime   @default(now())
 
   @@map("replies")
 }

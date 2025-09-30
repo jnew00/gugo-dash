@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import GugoHeader from '@/components/GugoHeader'
+import GugoSelect from '@/components/GugoSelect'
 
 interface Meme {
   id: string
@@ -53,6 +55,15 @@ export default function AdminPage() {
     memeMatchModel: 'local',
     memeAnalysisModel: 'local'
   })
+  const [availableProviders, setAvailableProviders] = useState<{
+    text: string[],
+    image: string[],
+    vision: string[]
+  }>({
+    text: ['local', 'deepseek', 'openai'],
+    image: ['together', 'replicate'],
+    vision: ['local', 'deepseek', 'openai', 'keyword', 'random']
+  })
   const [llmConfig, setLlmConfig] = useState<LLMConfig>({
     baseUrl: 'Loading...',
     textModel: 'Loading...',
@@ -61,6 +72,7 @@ export default function AdminPage() {
   })
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [loading, setLoading] = useState(false)
+  const visionAnalysisProviders = availableProviders.vision.filter(provider => provider !== 'keyword' && provider !== 'random')
 
   useEffect(() => {
     fetchMemes()
@@ -68,6 +80,7 @@ export default function AdminPage() {
     fetchLLMConfig()
     fetchHashtags()
     fetchMentions()
+    fetchAvailableProviders()
   }, [])
 
   const fetchMemes = async () => {
@@ -127,6 +140,28 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch mentions:', error)
+    }
+  }
+
+  const fetchAvailableProviders = async () => {
+    try {
+      const response = await fetch('/api/admin/providers')
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableProviders(data.providers)
+
+        // Update LLM config with actual models
+        if (data.models) {
+          setLlmConfig(prev => ({
+            ...prev,
+            textModel: data.models.localText,
+            visionModel: data.models.localVision,
+            baseUrl: data.models.localBase
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch available providers:', error)
     }
   }
 
@@ -480,59 +515,97 @@ export default function AdminPage() {
         <div className="gugo-card mb-8">
           <h2 className="gugo-subtitle mb-6">LLM PROVIDER SETTINGS</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="min-w-0">
               <label className="gugo-label">TEXT PROVIDER</label>
-              <select
+              <GugoSelect
                 value={settings.textProvider}
-                onChange={(e) => setSettings({...settings, textProvider: e.target.value})}
-                className="gugo-select"
-              >
-                <option value="local">Local LLM (Ollama/LM Studio)</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-              </select>
+                onChange={(provider) => setSettings({ ...settings, textProvider: provider })}
+                options={availableProviders.text.map(provider => ({
+                  value: provider,
+                  label: provider === 'local' ? 'Local LLM' : provider === 'deepseek' ? 'DeepSeek AI' : provider === 'openai' ? 'OpenAI GPT' : provider,
+                  description: provider === 'local'
+                    ? `Using ${llmConfig.textModel}`
+                    : provider === 'deepseek'
+                      ? 'Cloud AI by DeepSeek'
+                      : provider === 'openai'
+                        ? 'OpenAI GPT family'
+                        : undefined
+                }))}
+                placeholder="Select text provider"
+                disabled={availableProviders.text.length === 0}
+                helperText={availableProviders.text.length === 0 ? 'No text providers configured' : undefined}
+              />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="gugo-label">IMAGE PROVIDER</label>
-              <select
+              <GugoSelect
                 value={settings.imageProvider}
-                onChange={(e) => setSettings({...settings, imageProvider: e.target.value})}
-                className="gugo-select"
-              >
-                <option value="together">Together.ai</option>
-                <option value="openai">OpenAI DALL-E</option>
-                <option value="stability">Stability AI</option>
-              </select>
+                onChange={(provider) => setSettings({ ...settings, imageProvider: provider })}
+                options={availableProviders.image.map(provider => ({
+                  value: provider,
+                  label: provider === 'together' ? 'Together.ai' : provider === 'replicate' ? 'Replicate' : provider === 'openai' ? 'OpenAI DALL-E' : provider,
+                  description: provider === 'together'
+                    ? 'High-fidelity image generation'
+                    : provider === 'replicate'
+                      ? 'Replicate model hub'
+                      : provider === 'openai'
+                        ? 'OpenAI image models'
+                        : undefined
+                }))}
+                placeholder="Select image provider"
+                disabled={availableProviders.image.length === 0}
+                helperText={availableProviders.image.length === 0 ? 'No image providers configured' : undefined}
+              />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="gugo-label">MEME MATCHING MODEL</label>
-              <select
+              <GugoSelect
                 value={settings.memeMatchModel}
-                onChange={(e) => setSettings({...settings, memeMatchModel: e.target.value})}
-                className="gugo-select"
-              >
-                <option value="local">Local LLM (Ollama/LM Studio)</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-              </select>
+                onChange={(provider) => setSettings({ ...settings, memeMatchModel: provider })}
+                options={availableProviders.vision.map(provider => ({
+                  value: provider,
+                  label: provider === 'local' ? 'Local LLM' : provider === 'deepseek' ? 'DeepSeek AI' : provider === 'openai' ? 'OpenAI GPT' : provider === 'keyword' ? 'Keyword Matching' : provider === 'random' ? 'Random Selection' : provider,
+                  description: provider === 'local'
+                    ? `Using ${llmConfig.textModel}`
+                    : provider === 'keyword'
+                      ? 'Score memes by description & sentiment'
+                      : provider === 'random'
+                        ? 'Shuffle memes when no context fits'
+                        : provider === 'deepseek'
+                          ? 'DeepSeek recommendation model'
+                          : provider === 'openai'
+                            ? 'OpenAI-powered classifier'
+                            : undefined
+                }))}
+                placeholder="Select matching model"
+                disabled={availableProviders.vision.length === 0}
+                helperText={availableProviders.vision.length === 0 ? 'No matching providers configured' : undefined}
+              />
             </div>
 
-            <div>
-              <label className="gugo-label">MEME ANALYSIS MODEL</label>
-              <select
+            <div className="min-w-0">
+              <label className="gugo-label">MEME ANALYSIS MODEL (Vision)</label>
+              <GugoSelect
                 value={settings.memeAnalysisModel}
-                onChange={(e) => setSettings({...settings, memeAnalysisModel: e.target.value})}
-                className="gugo-select"
-              >
-                <option value="local">Local LLM (Fallback only)</option>
-                <option value="openai">OpenAI GPT-4 Vision</option>
-                <option value="deepseek">DeepSeek (Fallback only)</option>
-              </select>
+                onChange={(provider) => setSettings({ ...settings, memeAnalysisModel: provider })}
+                options={visionAnalysisProviders.map(provider => ({
+                  value: provider,
+                  label: provider === 'local' ? 'Local Vision' : provider === 'deepseek' ? 'DeepSeek Vision' : provider === 'openai' ? 'OpenAI GPT-4 Vision' : provider,
+                  description: provider === 'local'
+                    ? `Using ${llmConfig.visionModel}`
+                    : provider === 'deepseek'
+                      ? 'DeepSeek multimodal'
+                      : provider === 'openai'
+                        ? 'OpenAI multimodal analysis'
+                        : undefined
+                }))}
+                placeholder="Select analysis model"
+                disabled={visionAnalysisProviders.length === 0}
+                helperText={visionAnalysisProviders.length === 0 ? 'No vision providers configured' : undefined}
+              />
             </div>
           </div>
 
@@ -734,11 +807,15 @@ export default function AdminPage() {
             {memes.map((meme) => (
               <div key={meme.id} className="gugo-meme-item">
                 <div className="relative group">
-                  <img
-                    src={`/api/memes/serve/${meme.filename}`}
-                    alt={meme.description || meme.filename}
-                    className="w-full h-32 object-cover gugo-border"
-                  />
+                  <div className="relative w-full h-32 gugo-border overflow-hidden">
+                    <Image
+                      src={`/api/memes/serve/${meme.filename}`}
+                      alt={meme.description || meme.filename}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 15vw"
+                    />
+                  </div>
 
                   <button
                     onClick={() => handleDeleteMeme(meme.id)}

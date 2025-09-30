@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import GugoButton from './GugoButton'
 
@@ -46,7 +46,7 @@ export default function MemeSelector({ selectedMeme, onMemeSelect, tweetText, tw
     }
   }
 
-  const matchMemes = async () => {
+  const matchMemes = useCallback(async () => {
     if (!tweetText || !tweetAuthor) return
 
     setIsMatching(true)
@@ -71,19 +71,13 @@ export default function MemeSelector({ selectedMeme, onMemeSelect, tweetText, tw
       setMatchStatus('Matching failed')
     } finally {
       setIsMatching(false)
-
-      // Clear status after a delay
-      setTimeout(() => {
-        setMatchStatus('')
-      }, 3000)
+      // Don't clear status - keep it persistent
     }
-  }
+  }, [tweetAuthor, tweetText])
 
   useEffect(() => {
-    if (tweetText && tweetAuthor) {
-      matchMemes()
-    }
-  }, [tweetText, tweetAuthor])
+    matchMemes()
+  }, [matchMemes])
 
   const displayMemes = showAllMemes ? memes : (matchedMemes.length > 0 ? matchedMemes : memes)
 

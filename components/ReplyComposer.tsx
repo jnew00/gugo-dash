@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Tweet } from '@prisma/client'
 import GugoButton from './GugoButton'
 import ImageGallery from './ImageGallery'
+import HashtagMentionSelector from './HashtagMentionSelector'
+import MemeSelector from './MemeSelector'
 
 interface ReplyComposerProps {
   tweet: Tweet
@@ -19,20 +21,37 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showImageGallery, setShowImageGallery] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [selectedMeme, setSelectedMeme] = useState<string | null>(null)
+  const [showMemeSelector, setShowMemeSelector] = useState(false)
+  const [aiProvider, setAiProvider] = useState<string>('')
+
+  // Auto-generate suggestions when modal opens
+  useEffect(() => {
+    generateSuggestions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const generateSuggestions = async () => {
     setIsGenerating(true)
+    setAiProvider('Generating with AI...')
     try {
       const response = await fetch('/api/replies/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tweetText: tweet.tweetText, tweetAuthor: tweet.author })
       })
-      
+
       const data = await response.json()
       setSuggestions(data.suggestions || [])
+      setAiProvider(data.provider ? `Generated with ${data.provider}` : '')
+
+      // Auto-select first suggestion if available
+      if (data.suggestions && data.suggestions.length > 0 && !replyText) {
+        setReplyText(data.suggestions[0])
+      }
     } catch (error) {
       console.error('Failed to generate suggestions:', error)
+      setAiProvider('Generation failed')
     } finally {
       setIsGenerating(false)
     }
@@ -51,7 +70,8 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
         body: JSON.stringify({
           tweetId: tweet.tweetId,
           replyText,
-          imageId: selectedImage
+          imageId: selectedImage,
+          memeId: selectedMeme
         })
       })
 
@@ -101,16 +121,28 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
             <div className="flex items-center justify-between mb-4">
               <label className="font-black uppercase text-sm tracking-wide">
                 YOUR REPLY
+                {aiProvider && (
+                  <span className="text-xs text-gugo-green ml-2 font-normal">
+                    ({aiProvider})
+                  </span>
+                )}
               </label>
               <div className="flex space-x-3">
-                <GugoButton 
+                <GugoButton
                   onClick={generateSuggestions}
                   disabled={isGenerating}
                   className="text-xs py-2 px-4"
                 >
-                  {isGenerating ? 'GENERATING...' : 'GENERATE AI'}
+                  {isGenerating ? 'GENERATING...' : 'REGENERATE AI'}
                 </GugoButton>
-                <GugoButton 
+                <GugoButton
+                  variant="secondary"
+                  onClick={() => setShowMemeSelector(!showMemeSelector)}
+                  className="text-xs py-2 px-4"
+                >
+                  {showMemeSelector ? 'HIDE MEMES' : 'ADD MEME'}
+                </GugoButton>
+                <GugoButton
                   variant="secondary"
                   onClick={() => setShowImageGallery(!showImageGallery)}
                   className="text-xs py-2 px-4"
@@ -119,6 +151,12 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
                 </GugoButton>
               </div>
             </div>
+
+            {/* Hashtag and Mention Selector */}
+            <HashtagMentionSelector
+              replyText={replyText}
+              onUpdateReply={setReplyText}
+            />
             
             <textarea
               value={replyText}
@@ -142,6 +180,15 @@ export default function ReplyComposer({ tweet, onClose, onReplySent }: ReplyComp
               </div>
             )}
           </div>
+
+          {showMemeSelector && (
+            <MemeSelector
+              selectedMeme={selectedMeme}
+              onMemeSelect={setSelectedMeme}
+              tweetText={tweet.tweetText}
+              tweetAuthor={tweet.author}
+            />
+          )}
 
           {showImageGallery && (
             <ImageGallery

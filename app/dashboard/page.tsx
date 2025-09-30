@@ -33,21 +33,26 @@ export default function DashboardPage() {
 
   const addTweet = async () => {
     if (!newTweetUrl.trim()) return
-    
+
     try {
       const response = await fetch('/api/tweets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: newTweetUrl.trim() })
       })
-      
+
       if (response.ok) {
         setNewTweetUrl('')
         setShowAddModal(false)
         fetchTweets()
+      } else {
+        const data = await response.json()
+        console.error('Failed to add tweet:', data.error)
+        alert(data.error || 'Failed to add tweet')
       }
     } catch (error) {
       console.error('Failed to add tweet:', error)
+      alert('Failed to add tweet. Check console for details.')
     }
   }
 
@@ -58,9 +63,9 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       })
-      
+
       if (response.ok) {
-        setTweets(tweets.map(tweet => 
+        setTweets(tweets.map(tweet =>
           tweet.id === tweetId ? { ...tweet, status } : tweet
         ))
       }
@@ -69,7 +74,50 @@ export default function DashboardPage() {
     }
   }
 
-  const filteredTweets = tweets.filter(tweet => 
+  const handleRemoveTweet = async (tweetId: string) => {
+    try {
+      const response = await fetch(`/api/tweets/${tweetId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setTweets(tweets.filter(tweet => tweet.id !== tweetId))
+      }
+    } catch (error) {
+      console.error('Failed to delete tweet:', error)
+    }
+  }
+
+  const handleDeleteFromTwitter = async (tweetId: string) => {
+    try {
+      const response = await fetch(`/api/tweets/${tweetId}/delete-from-twitter`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Update the tweet status back to NEW since reply was deleted
+        setTweets(tweets.map(tweet =>
+          tweet.id === tweetId ? { ...tweet, status: 'NEW' } : tweet
+        ))
+        alert('Reply deleted from Twitter/X successfully!')
+      } else {
+        alert(data.error || 'Failed to delete reply from Twitter/X')
+      }
+    } catch (error) {
+      console.error('Failed to delete reply from Twitter:', error)
+      alert('Failed to delete reply from Twitter/X. Check console for details.')
+    }
+  }
+
+  const handleRefreshTweet = (tweetId: string, updatedText: string) => {
+    setTweets(tweets.map(tweet =>
+      tweet.id === tweetId ? { ...tweet, tweetText: updatedText } : tweet
+    ))
+  }
+
+  const filteredTweets = tweets.filter(tweet =>
     filter === 'ALL' || tweet.status === filter
   )
 
@@ -102,12 +150,10 @@ export default function DashboardPage() {
             
             <div className="flex space-x-4">
               <GugoButton onClick={() => setShowAddModal(true)}>
-                <Plus className="w-4 h-4 mr-2" />
                 ADD TWEET
               </GugoButton>
               
               <GugoButton variant="secondary">
-                <RefreshCw className="w-4 h-4 mr-2" />
                 SYNC DISCORD
               </GugoButton>
             </div>
@@ -132,7 +178,7 @@ export default function DashboardPage() {
             
             <div className="text-base">
               <span className="font-black text-gugo-brown">Total: </span>
-              <span className="text-2xl font-black text-gugo-gold">{tweets.length}</span>
+              <span className="text-xl font-black text-gugo-black">{counts.ALL}</span>
             </div>
           </div>
 
@@ -164,10 +210,13 @@ export default function DashboardPage() {
           ) : (
             <div className="gugo-grid gugo-grid-3">
               {filteredTweets.map((tweet) => (
-                <TweetCard 
-                  key={tweet.id} 
-                  tweet={tweet} 
+                <TweetCard
+                  key={tweet.id}
+                  tweet={tweet}
                   onStatusUpdate={handleStatusUpdate}
+                  onRemove={handleRemoveTweet}
+                  onDeleteFromTwitter={handleDeleteFromTwitter}
+                  onRefresh={handleRefreshTweet}
                 />
               ))}
             </div>

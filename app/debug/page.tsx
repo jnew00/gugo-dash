@@ -111,7 +111,7 @@ export default function DebugPage() {
           <div className="gugo-card mt-8">
             <h2 className="text-xl font-bold mb-4">Media Upload Test:</h2>
             <div className="space-y-4">
-              <p>Test uploading memes to Twitter's media API:</p>
+              <p>Test uploading memes to Twitter&apos;s media API:</p>
 
               {memes.length > 0 ? (
                 <div className="space-y-3">

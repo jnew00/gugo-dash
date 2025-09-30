@@ -13,20 +13,41 @@ export class LocalLLMProvider implements AIProvider {
 
   async generateReply(tweetText: string, tweetAuthor: string): Promise<{ suggestions: string[], isActualAI: boolean, statusMessage: string }> {
     try {
-      const prompt = `You are a social media engagement assistant for GUGO, a fitness and crypto community brand. Generate 3 short, engaging replies to this tweet.
+      const prompt = `You are the voice of GUGO - a bold, athletic community that embodies the spirit of running and movement.
 
 Tweet from @${tweetAuthor}: "${tweetText}"
 
-Requirements:
-- Keep replies under 280 characters
-- Be friendly and engaging
-- Include GUGO spirit when appropriate (running, fitness, community)
-- Vary the tone (supportive, humorous, insightful)
-- DO NOT use hashtags (#)
-- Use maximum 2 emojis per reply, and only if they add meaning
-- Emojis should be relevant and professional (no spam)
+GUGO VOICE CHARACTERISTICS:
+- Short, punchy sentences
+- Rhythmic, almost poetic structure
+- Powerful, repetitive phrasing
+- Minimalist but impactful
+- Running/movement metaphors when relevant
+- "We run. We GUGO." as core philosophy
 
-Generate exactly 3 different replies, one per line:`
+GUGO STYLE EXAMPLE:
+"He didn't ask to be born.
+He didn't ask to be followed.
+He just ran.
+
+And for some reason…
+we followed.
+
+This is GUGO.
+He runs.
+We GUGO."
+
+REPLY REQUIREMENTS:
+- Stay under 280 characters
+- Match GUGO's bold, confident tone
+- Use short, impactful sentences
+- Be authentic and engaging
+- NO hashtags
+- Maximum 1 emoji per reply, only if it adds impact
+- Never use em-dashes (—) - use periods or line breaks for impact
+- When relevant, incorporate running/movement metaphors
+
+Generate exactly 3 different replies in GUGO's distinctive style, one per line:`
 
       console.log('=== LOCAL LLM PROMPT ===')
       console.log('Model:', this.model)
@@ -55,14 +76,24 @@ Generate exactly 3 different replies, one per line:`
 
         if (response.ok) {
           const data = await response.json()
-          const replies = data.response
-            .split('\n')
-            .filter((line: string) => line.trim().length > 0)
+          const content = data.response || ''
+
+          // Split by double newlines (paragraphs) first, then fallback to single newlines
+          let replies = content.split('\n\n').filter((p: string) => p.trim().length > 0)
+
+          // If we got less than 3 paragraphs, try splitting by single newlines
+          if (replies.length < 3) {
+            replies = content.split('\n').filter((line: string) => line.trim().length > 0)
+          }
+
+          // Take first 3 and clean them up
+          replies = replies
             .slice(0, 3)
             .map((reply: string) => reply
               .replace(/^\d+[\)\.]\s*/, '')  // Remove 1. or 1) patterns
               .replace(/^[-•]\s*/, '')       // Remove bullet points
               .replace(/^[a-c][\)\.]\s*/i, '') // Remove a) or a. patterns
+              .replace(/\n/g, ' ')           // Replace internal newlines with spaces
               .trim())
 
           if (replies.length > 0) {
@@ -101,14 +132,23 @@ Generate exactly 3 different replies, one per line:`
       if (lmStudioResponse.ok) {
         const data = await lmStudioResponse.json()
         const content = data.choices[0]?.message?.content || ''
-        const replies = content
-          .split('\n')
-          .filter((line: string) => line.trim().length > 0)
+
+        // Split by double newlines (paragraphs) first, then fallback to single newlines
+        let replies = content.split('\n\n').filter((p: string) => p.trim().length > 0)
+
+        // If we got less than 3 paragraphs, try splitting by single newlines
+        if (replies.length < 3) {
+          replies = content.split('\n').filter((line: string) => line.trim().length > 0)
+        }
+
+        // Take first 3 and clean them up
+        replies = replies
           .slice(0, 3)
           .map((reply: string) => reply
             .replace(/^\d+[\)\.]\s*/, '')  // Remove 1. or 1) patterns
             .replace(/^[-•]\s*/, '')       // Remove bullet points
             .replace(/^[a-c][\)\.]\s*/i, '') // Remove a) or a. patterns
+            .replace(/\n/g, ' ')           // Replace internal newlines with spaces
             .trim())
 
         if (replies.length > 0) {
